@@ -6,8 +6,8 @@ public class Category {
   UUID id;
   String name;
   String slug;
-  String parentCaregory;
-  String isVisible;
+  Category parentCategory;
+  Boolean isVisible;
 
   public UUID getId() {
     return id;
@@ -33,19 +33,57 @@ public class Category {
     this.slug = slug;
   }
 
-  public String getParentCaregory() {
-    return parentCaregory;
+  public Category getParentCategory() {
+    return parentCategory;
   }
 
-  public void setParentCaregory(String parentCaregory) {
-    this.parentCaregory = parentCaregory;
+  public void setParentCategory(Category parentCategory) {
+    this.parentCategory = parentCategory;
   }
 
-  public String getIsVisible() {
+  public Boolean getIsVisible() {
     return isVisible;
   }
 
-  public void setIsVisible(String isVisible) {
+  public void setIsVisible(Boolean isVisible) {
     this.isVisible = isVisible;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Category other = (Category) obj;
+    if (id == null) {
+      if (other.id != null)
+        return false;
+    } else if (!id.equals(other.id))
+      return false;
+    if (isVisible == null) {
+      if (other.isVisible != null)
+        return false;
+    } else if (!isVisible.equals(other.isVisible))
+      return false;
+    if (name == null) {
+      if (other.name != null)
+        return false;
+    } else if (!name.equals(other.name))
+      return false;
+    if (parentCategory == null) {
+      if (other.parentCategory != null)
+        return false;
+    } else if (!parentCategory.equals(other.parentCategory))
+      return false;
+    if (slug == null) {
+      if (other.slug != null)
+        return false;
+    } else if (!slug.equals(other.slug))
+      return false;
+    return true;
+  }
+
 }

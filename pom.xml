@@ -142,20 +142,6 @@
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<configuration>
-					<linksource>true</linksource>
-					<show>private</show>
-					<source>1.8</source>
-					<splitindex>true</splitindex>
-					<author>true</author>
-					<docfilessubdirs>true</docfilessubdirs>
-					<additionalparam>-Xdoclint:none</additionalparam>
-					<encoding>UTF-8</encoding>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
 

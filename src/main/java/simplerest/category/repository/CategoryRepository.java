@@ -7,8 +7,7 @@ import simplerest.category.model.Category;
 
 public interface CategoryRepository extends MongoRepository<Category, UUID> {
   Optional<Category> findById(UUID id);
-  
+
   Category findBySlug(String slug);
-  
-  
+
 }

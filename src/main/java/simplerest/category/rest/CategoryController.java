@@ -28,9 +28,9 @@ public class CategoryController {
 
   @RequestMapping("/")
   public String index() {
-      return "Service running!";
+    return "Service running!";
   }
-  
+
   @RequestMapping(value = "/category/{categoryName}", method = RequestMethod.GET)
   public ResponseEntity<Category> getCategory(@PathVariable String categoryName) {
     log.debug("Request recieved. categoryName = {}", categoryName);
@@ -42,7 +42,7 @@ public class CategoryController {
       category = getCategoryBySlug(categoryName);
       log.debug("Search by Slug result = {}", category);
     }
-    
+
     if (category == null) {
       return new ResponseEntity<Category>(HttpStatus.NOT_FOUND);
     } else {
@@ -51,8 +51,14 @@ public class CategoryController {
   }
 
   @RequestMapping(value = "/category/new", method = RequestMethod.POST)
-  public ResponseEntity<Category> getCategory(@RequestBody Category category) {
-    Category categoryResult = saveCategory(category);
+  public ResponseEntity<Category> saveCategory(@RequestBody Category category) {
+    log.info("saveCategory = {}", category);
+
+    if (category == null || category.getId() == null || category.getSlug() == null) {
+      return new ResponseEntity<Category>(HttpStatus.BAD_REQUEST);
+    }
+
+    Category categoryResult = saveCategoryNew(category);
 
     if (categoryResult == null) {
       return new ResponseEntity<Category>(HttpStatus.NOT_FOUND);
@@ -64,9 +70,9 @@ public class CategoryController {
   private Category getCategoryById(String caregoryId) {
     try {
       UUID caregoryUuid = UUID.fromString(caregoryId);
-      
+
       Optional<Category> category = categoryRepository.findById(caregoryUuid);
-      
+
       if (category.isPresent()) {
         return category.get();
       } else {
@@ -81,7 +87,7 @@ public class CategoryController {
     return categoryRepository.findBySlug(slug);
   }
 
-  private Category saveCategory(Category cartegory) {
+  private Category saveCategoryNew(Category cartegory) {
     return categoryRepository.insert(cartegory);
   }
 }
