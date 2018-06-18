@@ -69,7 +69,7 @@ In case of error 400 Bad Request returned.
 
 ### PATCH /category/edit
 
-Example: PATCH http://www.example.com/category/new
+Example: PATCH http://www.example.com/category/edit
 
 Request:
 ```
