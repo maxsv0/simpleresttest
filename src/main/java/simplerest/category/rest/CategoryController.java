@@ -33,14 +33,14 @@ public class CategoryController {
 
   @RequestMapping(value = "/category/{categoryName}", method = RequestMethod.GET)
   public ResponseEntity<Category> getCategory(@PathVariable String categoryName) {
-    log.debug("Request recieved. categoryName = {}", categoryName);
+    log.info("Request recieved. categoryName = {}", categoryName);
 
     Category category = getCategoryById(categoryName);
-    log.debug("Search by UUID result = {}", category);
+    log.info("Search by UUID result = {}", category);
 
     if (category == null) {
       category = getCategoryBySlug(categoryName);
-      log.debug("Search by Slug result = {}", category);
+      log.info("Search by Slug result = {}", category);
     }
 
     if (category == null) {
@@ -52,18 +52,17 @@ public class CategoryController {
 
   @RequestMapping(value = "/category/new", method = RequestMethod.POST)
   public ResponseEntity<Category> saveCategory(@RequestBody Category category) {
-    log.info("saveCategory = {}", category);
+    log.info("Save Category = {}", category);
 
-    if (category == null || category.getId() == null || category.getSlug() == null) {
+    if (category.getId() == null || category.getSlug() == null) {
       return new ResponseEntity<Category>(HttpStatus.BAD_REQUEST);
     }
 
-    Category categoryResult = saveCategoryNew(category);
-
-    if (categoryResult == null) {
-      return new ResponseEntity<Category>(HttpStatus.NOT_FOUND);
-    } else {
+    try {
+      Category categoryResult = saveCategoryNew(category);
       return new ResponseEntity<Category>(categoryResult, HttpStatus.OK);
+    } catch (Exception e) {
+      return new ResponseEntity<Category>(HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -71,7 +70,7 @@ public class CategoryController {
     try {
       UUID caregoryUuid = UUID.fromString(caregoryId);
 
-      Optional<Category> category = categoryRepository.findById(caregoryUuid);
+      Optional<Category> category = categoryRepository.findByIdAndIsVisibleIsTrue(caregoryUuid);
 
       if (category.isPresent()) {
         return category.get();
@@ -84,7 +83,7 @@ public class CategoryController {
   }
 
   private Category getCategoryBySlug(String slug) {
-    return categoryRepository.findBySlug(slug);
+    return categoryRepository.findBySlugAndIsVisibleIsTrue(slug);
   }
 
   private Category saveCategoryNew(Category cartegory) {
