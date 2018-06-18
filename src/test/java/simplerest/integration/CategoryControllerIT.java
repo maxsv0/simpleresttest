@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -12,8 +13,6 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -30,8 +29,6 @@ import simplerest.category.repository.CategoryRepository;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     classes = Application.class)
 public class CategoryControllerIT {
-  private static final Logger log = LoggerFactory.getLogger(CategoryControllerIT.class);
-
   @LocalServerPort
   private int port;
 
@@ -169,9 +166,92 @@ public class CategoryControllerIT {
     categoryRepository.delete(category);
   }
 
+  @Test
+  public void checkSaveCategoryWithParent() throws Exception {
+    Category category = loadCategoryWithParentSample();
+    assertNotNull(category);
+    assertNotNull(category.getParentCategory());
+
+    ResponseEntity<Category> response =
+        template.postForEntity(base.toString() + "category/new", category, Category.class);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(category, response.getBody());
+
+    Optional<Category> categoryDb = categoryRepository.findById(category.getId());
+    assertTrue(categoryDb.isPresent());
+    assertEquals(category, categoryDb.get());
+
+    categoryDb = categoryRepository.findById(category.getParentCategory().getId());
+    assertTrue(categoryDb.isPresent());
+    assertEquals(category.getParentCategory(), categoryDb.get());
+
+    categoryRepository.delete(category);
+    categoryRepository.deleteById(category.getParentCategory().getId());
+  }
+
+
+  @Test
+  public void checkSaveCategoryWithSameParent() throws Exception {
+    Category category = loadCategoryWithParentSample();
+    assertNotNull(category);
+    assertNotNull(category.getParentCategory());
+
+    ResponseEntity<Category> response =
+        template.postForEntity(base.toString() + "category/new", category, Category.class);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(category, response.getBody());
+
+    UUID categoryFirstId = category.getId();
+
+    category.setId(UUID.randomUUID());
+    category.setSlug("test");
+    category.setName("Test");
+
+    response = template.postForEntity(base.toString() + "category/new", category, Category.class);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    assertEquals(category, response.getBody());
+
+    Optional<Category> categoryDb = categoryRepository.findById(category.getId());
+    assertTrue(categoryDb.isPresent());
+    assertEquals(category, categoryDb.get());
+
+    categoryDb = categoryRepository.findById(category.getParentCategory().getId());
+    assertTrue(categoryDb.isPresent());
+    assertEquals(category.getParentCategory(), categoryDb.get());
+
+    categoryRepository.delete(category);
+    categoryRepository.deleteById(categoryFirstId);
+    categoryRepository.deleteById(category.getParentCategory().getId());
+  }
+
+  // @Test
+  // public void checkPatchCategory() throws Exception {
+  // Category category = loadCategorySample();
+  // assertNotNull(category);
+  //
+  // categoryRepository.insert(category);
+  //
+  // Category categoryResult = template
+  // .patchForObject(base.toString() + "category/edit", "", Category.class,
+  // "isVisible=1&categoryName=" + category.getId());
+  // log.info(" categoryResult = {} ", categoryResult);
+  //
+  // assertEquals(category, categoryResult);
+  //
+  // categoryRepository.delete(category);
+  // }
+
   private Category loadCategorySample() throws IOException {
     FileInputStream testJSONInputStream =
         new FileInputStream("src/test/resources/catalog/valid_category.json");
+    ObjectMapper mapper = new ObjectMapper();
+    Category category = mapper.readValue(testJSONInputStream, Category.class);
+    return category;
+  }
+
+  private Category loadCategoryWithParentSample() throws IOException {
+    FileInputStream testJSONInputStream =
+        new FileInputStream("src/test/resources/catalog/valid_category_with_parent.json");
     ObjectMapper mapper = new ObjectMapper();
     Category category = mapper.readValue(testJSONInputStream, Category.class);
     return category;

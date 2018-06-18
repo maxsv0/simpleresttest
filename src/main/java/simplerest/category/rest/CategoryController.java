@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import simplerest.category.model.Category;
 import simplerest.category.repository.CategoryRepository;
@@ -33,20 +34,31 @@ public class CategoryController {
 
   @RequestMapping(value = "/category/{categoryName}", method = RequestMethod.GET)
   public ResponseEntity<Category> getCategory(@PathVariable String categoryName) {
-    log.info("Request recieved. categoryName = {}", categoryName);
+    log.info("Get request recieved. categoryName = {}", categoryName);
 
-    Category category = getCategoryById(categoryName);
-    log.info("Search by UUID result = {}", category);
-
-    if (category == null) {
-      category = getCategoryBySlug(categoryName);
-      log.info("Search by Slug result = {}", category);
-    }
+    Category category = getCategoryByUrl(categoryName);
 
     if (category == null) {
       return new ResponseEntity<Category>(HttpStatus.NOT_FOUND);
     } else {
       return new ResponseEntity<Category>(category, HttpStatus.OK);
+    }
+  }
+
+  @RequestMapping(value = "/category/edit", method = RequestMethod.PATCH)
+  public ResponseEntity<Category> patchCategory(@RequestParam String categoryId,
+      @RequestParam String isVisible) {
+    log.info("Patch Request recieved. categoryId = {}, isVisible = {}", categoryId, isVisible);
+
+    Category category = getCategoryById(categoryId, false);
+
+    if (category == null) {
+      return new ResponseEntity<Category>(HttpStatus.NOT_FOUND);
+    } else {
+      category.setIsVisible(Boolean.valueOf(isVisible));
+      Category categorySaved = categoryRepository.save(category);
+
+      return new ResponseEntity<Category>(categorySaved, HttpStatus.OK);
     }
   }
 
@@ -66,11 +78,16 @@ public class CategoryController {
     }
   }
 
-  private Category getCategoryById(String caregoryId) {
+  private Category getCategoryById(String caregoryId, Boolean isVisible) {
     try {
       UUID caregoryUuid = UUID.fromString(caregoryId);
+      Optional<Category> category;
 
-      Optional<Category> category = categoryRepository.findByIdAndIsVisibleIsTrue(caregoryUuid);
+      if (isVisible) {
+        category = categoryRepository.findByIdAndIsVisibleIsTrue(caregoryUuid);
+      } else {
+        category = categoryRepository.findById(caregoryUuid);
+      }
 
       if (category.isPresent()) {
         return category.get();
@@ -82,11 +99,31 @@ public class CategoryController {
     }
   }
 
+  private Category getCategoryByUrl(String categoryName) {
+    Category category = getCategoryById(categoryName, true);
+    log.info("Search by UUID result = {}", category);
+
+    if (category == null) {
+      category = getCategoryBySlug(categoryName);
+      log.info("Search by Slug result = {}", category);
+    }
+
+    return category;
+  }
+
   private Category getCategoryBySlug(String slug) {
     return categoryRepository.findBySlugAndIsVisibleIsTrue(slug);
   }
 
-  private Category saveCategoryNew(Category cartegory) {
-    return categoryRepository.insert(cartegory);
+  private Category saveCategoryNew(Category category) {
+    if (category.getParentCategory() != null) {
+      Optional<Category> categoryParent =
+          categoryRepository.findById(category.getParentCategory().getId());
+      if (!categoryParent.isPresent()) {
+        saveCategoryNew(category.getParentCategory());
+      }
+    }
+
+    return categoryRepository.insert(category);
   }
 }

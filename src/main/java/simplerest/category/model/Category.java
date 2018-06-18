@@ -86,4 +86,10 @@ public class Category {
     return true;
   }
 
+  @Override
+  public String toString() {
+    return "Category [id=" + id + ", name=" + name + ", slug=" + slug + ", parentCategory="
+        + parentCategory + ", isVisible=" + isVisible + "]";
+  }
+
 }

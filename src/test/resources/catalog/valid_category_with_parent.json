@@ -1,0 +1,13 @@
+{
+	"id": "cfc6247d-6a2d-4c0a-91ef-a12b70e32108",
+	"name": "Drawing",
+	"slug": "drawing",
+	"parentCategory": {
+		"id": "c62ad8de-a71e-45ac-a329-98f9cc6e306f",
+		"name": "Art",
+		"slug": "art",
+		"parentCategory": null,
+		"isVisible": true
+	},
+	"isVisible": true
+}
