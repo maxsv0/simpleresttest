@@ -101,7 +101,7 @@ public class Category {
   @Override
   public String toString() {
     return "Category [id=" + id + ", name=" + name + ", slug=" + slug + ", parentCategory="
-        + parentCategory + ", isVisible=" + isVisible + "]";
+        + parentCategory + ", childCategory=" + childCategory + ", isVisible=" + isVisible + "]";
   }
 
 }
