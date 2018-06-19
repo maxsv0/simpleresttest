@@ -1,5 +1,6 @@
 package simplerest.category.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -9,4 +10,6 @@ public interface CategoryRepository extends MongoRepository<Category, UUID> {
   Optional<Category> findByIdAndIsVisibleIsTrue(UUID id);
 
   Category findBySlugAndIsVisibleIsTrue(String slug);
+  
+  List<Category> findByParentCategoryIdAndIsVisibleIsTrue(UUID id);
 }

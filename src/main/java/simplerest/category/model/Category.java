@@ -1,12 +1,16 @@
 package simplerest.category.model;
 
+import java.util.List;
 import java.util.UUID;
+import org.springframework.data.annotation.Transient;
 
 public class Category {
   UUID id;
   String name;
   String slug;
   Category parentCategory;
+  @Transient
+  List<Category> childCategory;
   Boolean isVisible;
 
   public UUID getId() {
@@ -47,6 +51,14 @@ public class Category {
 
   public void setIsVisible(Boolean isVisible) {
     this.isVisible = isVisible;
+  }
+
+  public List<Category> getChildCategory() {
+    return childCategory;
+  }
+
+  public void setChildCategory(List<Category> childCategory) {
+    this.childCategory = childCategory;
   }
 
   @Override

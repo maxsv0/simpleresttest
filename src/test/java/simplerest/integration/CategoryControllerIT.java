@@ -13,6 +13,8 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -31,6 +33,8 @@ import simplerest.category.repository.CategoryRepository;
 public class CategoryControllerIT {
   @LocalServerPort
   private int port;
+
+  private static final Logger log = LoggerFactory.getLogger(CategoryControllerIT.class);
 
   @Autowired
   private CategoryRepository categoryRepository;
@@ -177,11 +181,14 @@ public class CategoryControllerIT {
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(category, response.getBody());
 
-    Optional<Category> categoryDb = categoryRepository.findById(category.getId());
-    assertTrue(categoryDb.isPresent());
-    assertEquals(category, categoryDb.get());
+    response = template.getForEntity(
+        base.toString() + "category/" + category.getId(), Category.class);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    log.info("category parent REST = {}", response.getBody());
+    assertEquals(category, response.getBody());
 
-    categoryDb = categoryRepository.findById(category.getParentCategory().getId());
+    Optional<Category> categoryDb = categoryRepository.findById(category.getParentCategory().getId());
+    log.info("category parent DB = {}", categoryDb);
     assertTrue(categoryDb.isPresent());
     assertEquals(category.getParentCategory(), categoryDb.get());
 
@@ -189,57 +196,48 @@ public class CategoryControllerIT {
     categoryRepository.deleteById(category.getParentCategory().getId());
   }
 
-
   @Test
   public void checkSaveCategoryWithSameParent() throws Exception {
-    Category category = loadCategoryWithParentSample();
-    assertNotNull(category);
-    assertNotNull(category.getParentCategory());
+    Category categorySample = loadCategoryWithParentSample();
+    assertNotNull(categorySample);
+    assertNotNull(categorySample.getParentCategory());
 
     ResponseEntity<Category> response =
-        template.postForEntity(base.toString() + "category/new", category, Category.class);
+        template.postForEntity(base.toString() + "category/new", categorySample, Category.class);
     assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertEquals(category, response.getBody());
+    assertEquals(categorySample, response.getBody());
 
-    UUID categoryFirstId = category.getId();
+    UUID categoryFirstId = categorySample.getId();
 
+    Category category = new Category();
     category.setId(UUID.randomUUID());
     category.setSlug("test");
     category.setName("Test");
+    category.setIsVisible(true);
+    category.setParentCategory(categorySample.getParentCategory());
 
     response = template.postForEntity(base.toString() + "category/new", category, Category.class);
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertEquals(category, response.getBody());
 
     Optional<Category> categoryDb = categoryRepository.findById(category.getId());
+    log.debug("categoryDb = {}", categoryDb);
     assertTrue(categoryDb.isPresent());
     assertEquals(category, categoryDb.get());
 
-    categoryDb = categoryRepository.findById(category.getParentCategory().getId());
-    assertTrue(categoryDb.isPresent());
-    assertEquals(category.getParentCategory(), categoryDb.get());
+    response = template.getForEntity(
+        base.toString() + "category/" + categorySample.getParentCategory().getId(), Category.class);
+    assertEquals(HttpStatus.OK, response.getStatusCode());
+    log.info("category parent REST = {}", response.getBody());
+
+    assertEquals(2, response.getBody().getChildCategory().size());
+    assertEquals(categorySample, response.getBody().getChildCategory().get(0));
+    assertEquals(category, response.getBody().getChildCategory().get(1));
 
     categoryRepository.delete(category);
     categoryRepository.deleteById(categoryFirstId);
     categoryRepository.deleteById(category.getParentCategory().getId());
   }
-
-  // @Test
-  // public void checkPatchCategory() throws Exception {
-  // Category category = loadCategorySample();
-  // assertNotNull(category);
-  //
-  // categoryRepository.insert(category);
-  //
-  // Category categoryResult = template
-  // .patchForObject(base.toString() + "category/edit", "", Category.class,
-  // "isVisible=1&categoryName=" + category.getId());
-  // log.info(" categoryResult = {} ", categoryResult);
-  //
-  // assertEquals(category, categoryResult);
-  //
-  // categoryRepository.delete(category);
-  // }
 
   private Category loadCategorySample() throws IOException {
     FileInputStream testJSONInputStream =

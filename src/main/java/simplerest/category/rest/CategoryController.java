@@ -1,5 +1,6 @@
 package simplerest.category.rest;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -106,6 +107,16 @@ public class CategoryController {
     if (category == null) {
       category = getCategoryBySlug(categoryName);
       log.info("Search by Slug result = {}", category);
+    }
+
+    if (category != null) {
+      List<Category> childCategory =
+          categoryRepository.findByParentCategoryIdAndIsVisibleIsTrue(category.getId());
+      log.info("childCategory = {}", childCategory);
+      
+      if (!childCategory.isEmpty()) {
+        category.setChildCategory(childCategory);
+      }
     }
 
     return category;
